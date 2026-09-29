@@ -40,7 +40,7 @@ Manual quality grading of agricultural produce is inherently subjective, prone t
        ┌───────────────────────────────────────┼───────────────────────────────────────┐
        ▼                                       ▼                                       ▼
 ┌───────────────────────────────┐   ┌───────────────────────────────┐   ┌───────────────────────────────┐
-│ Red/Green Fruits (Apple/Tomato)│   │ Yellow/Green (Banana/Mango)   │   │ Brown/Textured (Kiwi/Chikoo)  │
+│ Red/Green Fruits(Apple/Tomato)│   │ Yellow/Green (Banana/Mango)   │   |Brown/Textured (Kiwi/Chikoo)   │
 ├───────────────────────────────┤   ├───────────────────────────────┤   ├───────────────────────────────┤
 │ • NDTI (Red-Green Index)      │   │ • YI (Yellowness Index)       │   │ • ExB (Excess Blue / Mold)    │
 │ • VARI (Vegetation Index)     │   │ • VARI (Chlorophyll Decay)    │   │ • L* Lightness Variance (Rot) │
