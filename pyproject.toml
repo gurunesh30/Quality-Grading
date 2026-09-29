@@ -80,5 +80,6 @@ markers = [
   "features: contract tests owned by the feature-extraction branch",
   "model: contract tests owned by the model branch",
   "frontend: contract tests owned by the frontend branch",
+  "api: contract tests owned by the orchestration layer on main",
   "integration: cross-workstream tests, only run on main",
 ]
