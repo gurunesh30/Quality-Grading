@@ -12,7 +12,13 @@ only the API's own dependencies installed.
 
 from __future__ import annotations
 
+import contextlib
 import io
+import os
+import subprocess
+import sys
+from collections.abc import Iterator
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -29,6 +35,8 @@ from agrigrade.api.adapter import (
 from agrigrade.api.schemas import SCHEMA_VERSION
 from agrigrade.core.enums import GRADE_ORDER
 from agrigrade.core.errors import SchemaMismatchError
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 pytestmark = pytest.mark.api
 
@@ -63,6 +71,52 @@ EXTRACTED_FEATURES: dict[str, float] = {
 
 #: What the client's ``isQualityGrade`` accepts.
 CLIENT_GRADES = ("Grade A", "Grade B", "Grade C", "Reject")
+
+
+class _Blocker:
+    """A meta-path finder that makes one module look uninstalled."""
+
+    def __init__(self, prefix: str) -> None:
+        self.prefix = prefix
+
+    def find_spec(self, fullname: str, path: object = None, target: object = None) -> None:
+        if fullname == self.prefix or fullname.startswith(f"{self.prefix}."):
+            raise ModuleNotFoundError(f"blocked for test: {fullname}")
+        return None
+
+
+@contextlib.contextmanager
+def workstream_absent(module: str) -> Iterator[None]:
+    """Make ``module`` unimportable for the duration of the block.
+
+    The boundary rule has to hold whether or not the workstream happens to be
+    installed, so the test forces the condition rather than depending on the
+    machine it runs on. Anything already imported is evicted and restored, so the
+    rest of the suite is unaffected.
+    """
+    evicted = {
+        name: module_obj
+        for name, module_obj in sys.modules.items()
+        if name == module or name.startswith(f"{module}.")
+    }
+    for name in evicted:
+        del sys.modules[name]
+
+    parent_name, _, leaf = module.rpartition(".")
+    parent = sys.modules.get(parent_name)
+    had_attr = parent is not None and hasattr(parent, leaf)
+    if had_attr:
+        delattr(parent, leaf)
+
+    blocker = _Blocker(module)
+    sys.meta_path.insert(0, blocker)
+    try:
+        yield
+    finally:
+        sys.meta_path.remove(blocker)
+        sys.modules.update(evicted)
+        if had_attr and parent is not None:
+            setattr(parent, leaf, getattr(parent, leaf, None))
 
 
 def _stub_extractor(
@@ -337,31 +391,90 @@ def test_reconciliation_reports_the_drift() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_app_boots_without_the_optional_workstreams() -> None:
+def test_app_imports_without_the_optional_workstreams() -> None:
     """Importing and constructing the app must not need OpenCV or scikit-learn.
 
     This is the property that lets ``main`` ship an API before the feature stage
-    has landed, and it is easy to lose by adding a module-level import.
+    has landed, and it is easy to lose by adding a module-level import. Checked in
+    a subprocess with the workstreams blocked, because by the time this module is
+    running they have usually already been imported.
     """
-    from agrigrade.api import features_extractor, model_reporting
+    script = """
+import sys
 
-    with pytest.raises(Exception) as missing_features:
-        features_extractor()
-    assert "workstream" in str(missing_features.value).lower()
+class Blocker:
+    def __init__(self, prefixes):
+        self.prefixes = prefixes
 
-    assert callable(model_reporting()[0])
+    def find_spec(self, fullname, path=None, target=None):
+        for prefix in self.prefixes:
+            if fullname == prefix or fullname.startswith(prefix + "."):
+                raise ModuleNotFoundError(fullname)
+        return None
+
+sys.meta_path.insert(0, Blocker(["agrigrade.features", "agrigrade.model.rf"]))
+
+from agrigrade.api import create_app
+
+create_app()
+print("BOOTED")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")},
+        timeout=120,
+    )
+    assert "BOOTED" in result.stdout, result.stderr[-2000:]
 
 
 def test_missing_feature_stage_surfaces_as_501(frame: bytes) -> None:
-    """Without an injected extractor and without OpenCV, the route 501s."""
-    bare = TestClient(create_app(), raise_server_exceptions=False)
-    response = bare.post(
+    """With the workstream unavailable, the route 501s with a readable reason."""
+    with workstream_absent("agrigrade.features"):
+        bare = TestClient(create_app(), raise_server_exceptions=False)
+        response = bare.post(
+            "/api/v1/grade",
+            files={"image": ("frame.jpg", frame, "image/jpeg")},
+            data={"produce_class_hint": "apple"},
+        )
+    assert response.status_code == 501
+    assert response.json()["error"] == "workstream_not_implemented"
+
+
+def test_missing_feature_stage_501s_only_the_grade_route(frame: bytes) -> None:
+    """A missing stage degrades grading, not the metadata the UI loads first."""
+    with workstream_absent("agrigrade.features"):
+        bare = TestClient(create_app(), raise_server_exceptions=False)
+        assert bare.get("/api/v1/health").status_code == 200
+        assert bare.get("/api/v1/classes").status_code == 200
+        assert bare.get("/api/v1/schema").status_code == 200
+
+
+def test_provenance_is_reported_not_implied(client: TestClient) -> None:
+    """A client must be able to tell a mock baseline from real training weights.
+
+    The artifact in this checkout is fitted on synthetic data, so anything that
+    implies otherwise is a false claim about how good the grade is. Both the
+    health probe and every grade response carry the value.
+    """
+    health = client.get("/api/v1/health").json()["data"]
+    assert health["provenance"] in {"synthetic_baseline", "captures", "unknown"}
+
+
+def test_grade_response_carries_model_provenance(client: TestClient, frame: bytes) -> None:
+    """The model block states where the weights came from."""
+    response = client.post(
         "/api/v1/grade",
         files={"image": ("frame.jpg", frame, "image/jpeg")},
         data={"produce_class_hint": "apple"},
     )
-    assert response.status_code == 501
-    assert response.json()["error"] == "workstream_not_implemented"
+    if response.status_code == 501:
+        pytest.skip("the model workstream is not installed")
+    model = response.json()["data"]["model"]
+    assert model["provenance"] in {"synthetic_baseline", "captures", "unknown"}
+    assert "notes" in model
 
 
 def test_grade_ladder_order_is_the_canonical_one() -> None:

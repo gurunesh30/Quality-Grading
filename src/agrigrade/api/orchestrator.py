@@ -366,6 +366,8 @@ class GradingOrchestrator:
                 n_estimators=model.n_estimators,
                 n_features=len(model.feature_names),
                 checksum=model.checksum,
+                provenance=model.provenance,
+                notes=model.notes,
             ),
         )
 

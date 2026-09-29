@@ -46,6 +46,9 @@ class HealthStatus(BaseModel):
 
     status: Annotated[str, Field(pattern="^(ok|degraded)$")]
     workstreams: dict[str, bool]
+    #: ``synthetic_baseline`` when the loaded weights were fitted on generated
+    #: data, so a client can warn instead of implying photographic training.
+    provenance: str = "unknown"
 
 
 class ClassCatalog(BaseModel):
@@ -145,6 +148,11 @@ class ModelInfo(BaseModel):
     n_estimators: int
     n_features: int
     checksum: str
+    #: ``synthetic_baseline`` | ``captures`` | ``unknown``. A client can show a
+    #: warning when the weights have never seen a photograph.
+    provenance: str = "unknown"
+    #: The training run's own note, verbatim.
+    notes: str = ""
 
 
 class ErrorBody(BaseModel):

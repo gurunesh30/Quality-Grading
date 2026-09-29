@@ -16,8 +16,13 @@
 # NOTE: `shap` is deliberately absent. `agrigrade.model.xai` computes local
 # attributions by single-feature occlusion, which needs only `predict_proba`, and
 # the specification's edge deployment target has no room for TreeSHAP's
-# compile-time dependency. It remains declared in the `model` extra because
-# `agrigrade.model.evaluate` imports it for the global attribution table.
+# compile-time dependency.
+#
+# It is still declared in the `model` extra in pyproject.toml, which is now
+# inaccurate: nothing under src/ imports `shap`, `onnx` or `onnxruntime`. Those
+# three extras are dead weight and can be dropped once the ONNX export path in
+# the specification lands. This file omits shap and keeps onnx/onnxruntime only
+# because the export target is still open.
 
 # --- core: shared contracts, dependency-free by design -------------------
 # (agrigrade.core imports nothing outside the standard library.)

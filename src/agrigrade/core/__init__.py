@@ -36,12 +36,12 @@ from agrigrade.core.errors import (
 )
 
 __all__ = [
-    "AgriGradeError",
     "CLASS_TO_FAMILY",
+    "GRADE_ORDER",
+    "AgriGradeError",
     "CalibrationError",
     "ContractError",
     "FeatureExtractionError",
-    "GRADE_ORDER",
     "ModelNotLoadedError",
     "ProduceClass",
     "ProduceFamily",

@@ -44,7 +44,11 @@ def extract_color_features(
     fg_b = rgb_float[:, :, 2][fg_mask]
 
     # Convert to CIELAB space
-    lab_img = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2LAB).astype(np.float32)
+    # OpenCV exposes this constant under both spellings; types-opencv-python only
+    # declares the mixed-case one, so the alias reads as an attribute error.
+    lab_img: np.ndarray = cv2.cvtColor(
+        rgb_uint8, cv2.COLOR_RGB2LAB  # type: ignore[attr-defined]
+    ).astype(np.float32)
     fg_l = lab_img[:, :, 0][fg_mask]
     fg_a = lab_img[:, :, 1][fg_mask]
     fg_b_lab = lab_img[:, :, 2][fg_mask]

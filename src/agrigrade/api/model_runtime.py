@@ -34,6 +34,12 @@ from agrigrade.core.errors import ModelNotLoadedError, WorkstreamNotImplementedE
 #: ``python -m agrigrade.model.train``.
 DEFAULT_ARTIFACT = "grader"
 
+#: Provenance values reported to clients. ``unknown`` is the honest default: an
+#: artifact that does not say where it was trained has not been vouched for.
+SYNTHETIC_BASELINE = "synthetic_baseline"
+CAPTURES = "captures"
+UNKNOWN_PROVENANCE = "unknown"
+
 
 @dataclass(frozen=True, slots=True)
 class LoadedModel:
@@ -43,6 +49,7 @@ class LoadedModel:
     manifest: dict[str, Any]
     feature_names: tuple[str, ...]
     schema_version: int
+    bundle_notes: str = ""
 
     @property
     def n_estimators(self) -> int:
@@ -51,6 +58,28 @@ class LoadedModel:
     @property
     def checksum(self) -> str:
         return str(self.manifest.get("checksum", ""))
+
+    @property
+    def notes(self) -> str:
+        """The training run's own note, e.g. that it is a mock baseline."""
+        return str(self.bundle_notes)
+
+    @property
+    def provenance(self) -> str:
+        """Whether these weights ever saw a photograph.
+
+        ``train.py`` stamps a synthetic run with a note saying so, and does not
+        write a boolean, so this reads the note. Defaulting to ``unknown`` rather
+        than guessing is deliberate: an unrecognised artifact is a mock baseline
+        until proven otherwise, and a client is better served by being told that
+        than by a confident wrong answer.
+        """
+        note = self.notes.upper()
+        if "MOCK" in note or "SYNTHETIC" in note:
+            return SYNTHETIC_BASELINE
+        if note:
+            return CAPTURES
+        return UNKNOWN_PROVENANCE
 
 
 _lock = threading.Lock()
@@ -153,6 +182,7 @@ def load_model(artifact: str = DEFAULT_ARTIFACT, *, refresh: bool = False) -> Lo
         manifest=bundle.manifest(),
         feature_names=tuple(bundle.feature_order),
         schema_version=int(bundle.schema_version),
+        bundle_notes=str(getattr(bundle.metadata, "notes", "") or ""),
     )
     if artifact == DEFAULT_ARTIFACT:
         with _lock:
@@ -168,7 +198,10 @@ def clear_cache() -> None:
 
 
 __all__ = [
+    "CAPTURES",
     "DEFAULT_ARTIFACT",
+    "SYNTHETIC_BASELINE",
+    "UNKNOWN_PROVENANCE",
     "LoadedModel",
     "clear_cache",
     "features_module",

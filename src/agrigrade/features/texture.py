@@ -148,7 +148,7 @@ def extract_texture_features(
 
     # Convert to grayscale uint8
     if image_rgb.dtype == np.uint8:
-        gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
+        gray: np.ndarray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
     else:
         rgb_uint8 = (np.clip(image_rgb, 0.0, 1.0) * 255.0).astype(np.uint8)
         gray = cv2.cvtColor(rgb_uint8, cv2.COLOR_RGB2GRAY)

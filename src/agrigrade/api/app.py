@@ -228,9 +228,10 @@ def create_app(
     def health() -> Envelope[HealthStatus]:
         """Liveness, plus which workstreams are importable right now."""
         workstreams = model_runtime.workstream_status()
+        provenance = model_runtime.UNKNOWN_PROVENANCE
         model_ready = False
         try:
-            _ = runner.model
+            provenance = runner.model.provenance
             model_ready = True
         except AgriGradeError:
             pass
@@ -239,6 +240,7 @@ def create_app(
             data=HealthStatus(
                 status=status,
                 workstreams={**workstreams, "model_artifact": model_ready},
+                provenance=provenance,
             )
         )
 

@@ -12,19 +12,28 @@ FAMILY_RECIPES: dict[ProduceFamily, dict[str, str]] = {
         "primary_spectral": "NDTI (Red-Green Index)",
         "secondary_spectral": "VARI (Vegetation Index)",
         "defect_signature": "Standard deviation of NDTI over foreground mask",
-        "description": "Quantifies lycopene/anthocyanin accumulation and chlorophyll decay for red/smooth produce.",
+        "description": (
+            "Quantifies lycopene/anthocyanin accumulation and chlorophyll "
+            "decay for red/smooth produce."
+        ),
     },
     ProduceFamily.YELLOW_GREEN: {
         "primary_spectral": "YI (Yellowness Index)",
         "secondary_spectral": "VARI (Chlorophyll Decay)",
         "defect_signature": "Ratio of pixels with YI < 0.1 (decay / spotting)",
-        "description": "Tracks carotenoid progression and spotting in bananas, mangoes, citrus, and papayas.",
+        "description": (
+            "Tracks carotenoid progression and spotting in bananas, mangoes, "
+            "citrus, and papayas."
+        ),
     },
     ProduceFamily.BROWN_TEXTURED: {
         "primary_spectral": "ExB (Excess Blue / Mold)",
         "secondary_spectral": "L* Lightness Mean",
         "defect_signature": "Standard deviation of L* channel (soft rot variance)",
-        "description": "Isolates surface mold via Excess Blue and detects soft rot via lightness variance on textured produce.",
+        "description": (
+            "Isolates surface mold via Excess Blue and detects soft rot via "
+            "lightness variance on textured produce."
+        ),
     },
     ProduceFamily.UNKNOWN: {
         "primary_spectral": "VARI",

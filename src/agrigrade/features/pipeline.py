@@ -11,7 +11,7 @@ from agrigrade.core.errors import (
 )
 from agrigrade.features.color import extract_color_features
 from agrigrade.features.geometry import extract_geometry_features
-from agrigrade.features.schema import FEATURE_NAMES, FeatureVector
+from agrigrade.features.schema import FeatureVector
 from agrigrade.features.spectral import extract_spectral_features
 from agrigrade.features.texture import extract_texture_features
 
@@ -53,7 +53,8 @@ def extract_produce_features(
 
     if image_rgb.shape[:2] != mask.shape[:2]:
         raise FeatureExtractionError(
-            f"Image dimensions {image_rgb.shape[:2]} and mask dimensions {mask.shape[:2]} do not match."
+            f"Image dimensions {image_rgb.shape[:2]} and mask dimensions "
+            f"{mask.shape[:2]} do not match."
         )
 
     fg_mask = mask > 0

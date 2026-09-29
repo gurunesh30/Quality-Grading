@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from types import TracebackType
 
 import numpy as np
 
@@ -16,11 +16,9 @@ from agrigrade.core.errors import CalibrationError, ProduceNotFoundError
 from agrigrade.features import (
     FEATURE_NAMES,
     FeatureVector,
-    extract_color_features,
     extract_geometry_features,
     extract_produce_features,
     extract_spectral_features,
-    extract_texture_features,
     resolve_family,
 )
 
@@ -36,14 +34,16 @@ class _RaisesContext:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: Any,
+        exc_tb: TracebackType | None,
     ) -> bool:
         if exc_type is None:
-            raise AssertionError(f"Expected exception {self.expected_exception.__name__} was not raised.")
+            raise AssertionError(
+                f"Expected exception {self.expected_exception.__name__} was not raised."
+            )
         return issubclass(exc_type, self.expected_exception)
 
 
-def approx(val: float, abs_tol: float = 1e-3) -> Any:
+def approx(val: float, abs_tol: float = 1e-3) -> object:
     if pytest is not None:
         return pytest.approx(val, abs=abs_tol)
 
@@ -56,7 +56,7 @@ def approx(val: float, abs_tol: float = 1e-3) -> Any:
     return ApproxVal()
 
 
-def raises(expected_exception: type[BaseException]) -> Any:
+def raises(expected_exception: type[BaseException]) -> object:
     if pytest is not None:
         return pytest.raises(expected_exception)
     return _RaisesContext(expected_exception)
