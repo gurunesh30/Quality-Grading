@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="AgriGrade — multi-spectral produce quality grading with explainable AI."
+    />
+    <meta name="theme-color" content="#333333" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>AgriGrade — Produce Quality Grading</title>
+    <script>
+      // Applied before first paint so the shell never flashes the wrong theme.
+      try {
+        const stored = localStorage.getItem("agrigrade-theme") ?? "dark";
+        const dark =
+          stored === "dark" ||
+          (stored === "system" &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
