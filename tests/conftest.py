@@ -38,7 +38,7 @@ def _importable(module: str) -> bool:
     """
     try:
         importlib.import_module(module)
-    except Exception:  # noqa: BLE001 - any failure means the workstream is absent
+    except Exception:
         return False
     return True
 
