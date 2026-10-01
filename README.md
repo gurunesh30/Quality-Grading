@@ -4,8 +4,6 @@
 
 **Domain:** AgriTech & Smart Farming
 
-**Problem Statement ID:** AGR-S05
-
 ## 1. Executive Summary
 
 Manual quality grading of agricultural produce is inherently subjective, prone to human error, and inconsistent across supply chain nodes. Standard computer vision approaches rely on static color averages or basic CNN classifications, which fail under variable lighting or when handling visually non-standard produce (e.g., brown fruits such as Kiwis or Chikoos).
