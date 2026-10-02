@@ -259,4 +259,6 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full map and
 
 3. **On-Device Edge Deployment:** Runs feature extraction via OpenCV and inference via TFLite/ONNX Runtime on mobile devices without relying on high-latency cloud servers.
 
-4. **Transparent Explainable AI (XAI):** Provides farmers and buyers with feature breakdown plots explaining *why* a particular batch received a specific grade.
+4. **Transparent Explainable AI (XAI):** Provides farmers and buyers with feature breakdown plots explaining *why* a particular batch received a specific grade. 
+
+looking for open source contributions
